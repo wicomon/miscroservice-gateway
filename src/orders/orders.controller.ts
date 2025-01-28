@@ -17,16 +17,17 @@ import { catchError, firstValueFrom } from 'rxjs';
 import { PaginationDto } from 'src/common';
 import { OrderPaginationDto } from './dto/order-pagination.dto';
 import { StatusDto } from './dto/status.dto';
+import { NATS_SERVICE } from 'src/config';
 
 @Controller('orders')
 export class OrdersController {
   constructor(
-    @Inject('ORDER_SERVICE') private readonly ordersClient: ClientProxy,
+    @Inject(NATS_SERVICE) private readonly client: ClientProxy,
   ) {}
 
   @Post()
   create(@Body() createOrderDto: CreateOrderDto) {
-    return this.ordersClient.send('createOrder', createOrderDto).pipe(
+    return this.client.send('createOrder', createOrderDto).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),
@@ -37,7 +38,7 @@ export class OrdersController {
   findAll(
     @Query() orderPaginationDto: OrderPaginationDto,
   ) {
-    return this.ordersClient.send('findAllOrders', orderPaginationDto).pipe(
+    return this.client.send('findAllOrders', orderPaginationDto).pipe(
       catchError((error) => {
         throw new RpcException(error);
       }),
@@ -48,7 +49,7 @@ export class OrdersController {
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
     try {
       const order = await firstValueFrom(
-        this.ordersClient.send('findOneOrder', {id})
+        this.client.send('findOneOrder', {id})
       );
       return order;
     } catch (error) {
@@ -69,7 +70,7 @@ export class OrdersController {
     // return {status, PaginationDto};
     try {
       const order = await firstValueFrom(
-        this.ordersClient.send('findAllOrders', {
+        this.client.send('findAllOrders', {
           ...paginationDto, 
           status: statusDto.status
         })
@@ -87,7 +88,7 @@ export class OrdersController {
   ) {
     try {
       const order = await firstValueFrom(
-        this.ordersClient.send('changeOrderStatus', {
+        this.client.send('changeOrderStatus', {
           id, 
           status: updateStatusDto.status
         })
